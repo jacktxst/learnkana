@@ -2,84 +2,603 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>katakana learn</title>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+
+    <title>Kana Practice</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: sans-serif;
+            text-align: center;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            padding:
+                env(safe-area-inset-top)
+                10px
+                env(safe-area-inset-bottom)
+                10px;
+        }
+
+        #app {
+            width: min(100%, 600px);
+            height: min(100%, 100dvh);
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+            min-height: 0;
+        }
+
+        /* -------------------- */
+        /* Mode selection        */
+        /* -------------------- */
+
+        #modeSelect {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            height: 100%;
+        }
+
+        #modeSelect h1 {
+            font-size: clamp(28px, 7vw, 42px);
+            margin: 0 0 30px;
+        }
+
+        #modeSelect button {
+            width: min(80%, 300px);
+            height: 65px;
+
+            margin: 7px;
+
+            font-size: 24px;
+
+            border: 1px solid #ccc;
+            border-radius: 10px;
+
+            background: #eee;
+
+            touch-action: manipulation;
+        }
+
+        #modeSelect button:active {
+            background: #ccc;
+        }
+
+        /* -------------------- */
+        /* Practice              */
+        /* -------------------- */
+
+        #practice {
+            display: none;
+
+            width: 100%;
+            height: 100%;
+
+            flex-direction: column;
+            justify-content: center;
+
+            min-height: 0;
+        }
+
+        #kana {
+            font-size: clamp(65px, 16vh, 125px);
+            line-height: 1;
+
+            margin-bottom: clamp(8px, 2vh, 20px);
+
+            flex-shrink: 0;
+        }
+
+        #feedback {
+            height: clamp(24px, 4vh, 36px);
+
+            font-size: clamp(16px, 2.8vh, 23px);
+
+            margin-bottom: clamp(5px, 1vh, 10px);
+
+            flex-shrink: 0;
+        }
+
+        /*
+         * Classic gojūon orientation:
+         *
+         *       a  ka sa ta na ha ma ya ra wa
+         *       i  ki shi chi ni hi mi    ri
+         *       u  ku su tsu nu fu mu yu ru
+         *       e  ke se te ne he me    re
+         *       o  ko so to no ho mo yo ro wo
+         */
+        #grid {
+            display: grid;
+
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+
+            gap: clamp(3px, 0.8vw, 7px);
+
+            width: 100%;
+
+            flex: 1;
+            min-height: 0;
+        }
+
+        #grid button {
+            min-width: 0;
+            min-height: 0;
+
+            padding: 0;
+
+            font-family: monospace;
+            font-size: clamp(12px, 3.4vw, 21px);
+
+            background: #eee;
+            color: #000;
+
+            border: 1px solid #ccc;
+            border-radius: clamp(4px, 1vw, 8px);
+
+            touch-action: manipulation;
+        }
+
+        #grid button:active {
+            background: #ccc;
+        }
+
+        #grid button.wrong {
+            background: #e74c3c;
+            color: white;
+            border-color: #c0392b;
+        }
+
+        #grid button.correct {
+            background: #2ecc71;
+            color: white;
+            border-color: #27ae60;
+        }
+
+        #grid button.empty {
+            visibility: hidden;
+        }
+
+        #reveal {
+            width: 100%;
+
+            height: clamp(35px, 6vh, 50px);
+
+            margin-top: clamp(4px, 1vh, 8px);
+
+            flex-shrink: 0;
+
+            font-size: clamp(16px, 3vw, 20px);
+
+            border: 1px solid #ccc;
+            border-radius: 8px;
+
+            touch-action: manipulation;
+        }
+
+        #revealedAnswer {
+            height: clamp(24px, 4vh, 35px);
+
+            margin-top: clamp(4px, 1vh, 8px);
+
+            font-family: monospace;
+            font-size: clamp(18px, 3.5vw, 26px);
+
+            flex-shrink: 0;
+        }
+    </style>
 </head>
+
 <body>
 
-<div id="katakana"></div>
+<div id="app">
 
-<input id="answer" type="text" autocomplete="off" autofocus>
+    <div id="modeSelect">
 
-<div id="feedback"></div>
-<button id="reveal" hidden>Reveal Answer</button>
+        <h1>What are you learning today?</h1>
+
+        <button id="hiraganaButton">
+            Hiragana
+        </button>
+
+        <button id="katakanaButton">
+            Katakana
+        </button>
+
+    </div>
+
+
+    <div id="practice">
+
+        <div id="kana"></div>
+
+        <div id="feedback"></div>
+
+        <div id="grid"></div>
+
+        <button id="reveal">
+            Reveal Answer
+        </button>
+
+        <div id="revealedAnswer"></div>
+
+    </div>
+
+</div>
+
 
 <script>
-const katakana = {
-    "ア": "a",   "イ": "i",   "ウ": "u",   "エ": "e",   "オ": "o",
-    "カ": "ka",  "キ": "ki",  "ク": "ku",  "ケ": "ke",  "コ": "ko",
-    "サ": "sa",  "シ": "shi", "ス": "su",  "セ": "se",  "ソ": "so",
-    "タ": "ta",  "チ": "chi", "ツ": "tsu", "テ": "te",  "ト": "to",
-    "ナ": "na",  "ニ": "ni",  "ヌ": "nu",  "ネ": "ne",  "ノ": "no",
-    "ハ": "ha",  "ヒ": "hi",  "フ": "fu",  "ヘ": "he",  "ホ": "ho",
-    "マ": "ma",  "ミ": "mi",  "ム": "mu",  "メ": "me",  "モ": "mo",
-    "ヤ": "ya",               "ユ": "yu",               "ヨ": "yo",
-    "ラ": "ra",  "リ": "ri",  "ル": "ru",  "レ": "re",  "ロ": "ro",
-    "ワ": "wa",                                      "ヲ": "wo",
-    "ン": "n"
+
+/* =========================================================
+   Kana data
+   ========================================================= */
+
+const hiragana = {
+    あ: "a",
+    い: "i",
+    う: "u",
+    え: "e",
+    お: "o",
+
+    か: "ka",
+    き: "ki",
+    く: "ku",
+    け: "ke",
+    こ: "ko",
+
+    さ: "sa",
+    し: "shi",
+    す: "su",
+    せ: "se",
+    そ: "so",
+
+    た: "ta",
+    ち: "chi",
+    つ: "tsu",
+    て: "te",
+    と: "to",
+
+    な: "na",
+    に: "ni",
+    ぬ: "nu",
+    ね: "ne",
+    の: "no",
+
+    は: "ha",
+    ひ: "hi",
+    ふ: "fu",
+    へ: "he",
+    ほ: "ho",
+
+    ま: "ma",
+    み: "mi",
+    む: "mu",
+    め: "me",
+    も: "mo",
+
+    や: "ya",
+    ゆ: "yu",
+    よ: "yo",
+
+    ら: "ra",
+    り: "ri",
+    る: "ru",
+    れ: "re",
+    ろ: "ro",
+
+    わ: "wa",
+    を: "wo",
+
+    ん: "n"
 };
 
-const chars = Object.keys(katakana);
 
-const katakanaElement = document.getElementById("katakana");
-const answerElement = document.getElementById("answer");
-const feedbackElement = document.getElementById("feedback");
-const revealButton = document.getElementById("reveal");
+const katakana = {
+    ア: "a",
+    イ: "i",
+    ウ: "u",
+    エ: "e",
+    オ: "o",
 
-let current;
-let answered = false;
+    カ: "ka",
+    キ: "ki",
+    ク: "ku",
+    ケ: "ke",
+    コ: "ko",
 
-function newQuestion() {
-    current = chars[Math.floor(Math.random() * chars.length)];
+    サ: "sa",
+    シ: "shi",
+    ス: "su",
+    セ: "se",
+    ソ: "so",
 
-    katakanaElement.textContent = current;
-    answerElement.value = "";
-    feedbackElement.textContent = "";
-    revealButton.hidden = true;
-    answered = false;
+    タ: "ta",
+    チ: "chi",
+    ツ: "tsu",
+    テ: "te",
+    ト: "to",
 
-    answerElement.focus();
+    ナ: "na",
+    ニ: "ni",
+    ヌ: "nu",
+    ネ: "ne",
+    ノ: "no",
+
+    ハ: "ha",
+    ヒ: "hi",
+    フ: "fu",
+    ヘ: "he",
+    ホ: "ho",
+
+    マ: "ma",
+    ミ: "mi",
+    ム: "mu",
+    メ: "me",
+    モ: "mo",
+
+    ヤ: "ya",
+    ユ: "yu",
+    ヨ: "yo",
+
+    ラ: "ra",
+    リ: "ri",
+    ル: "ru",
+    レ: "re",
+    ロ: "ro",
+
+    ワ: "wa",
+    ヲ: "wo",
+
+    ン: "n"
+};
+
+
+/* =========================================================
+   Gojūon grid
+   ========================================================= */
+
+const romajiGrid = [
+    ["a",  "ka",  "sa",   "ta",   "na", "ha", "ma", "ya", "ra", "wa"],
+    ["i",  "ki",  "shi",  "chi",  "ni", "hi", "mi", "",   "ri", ""  ],
+    ["u",  "ku",  "su",   "tsu",  "nu", "fu", "mu", "yu", "ru", ""  ],
+    ["e",  "ke",  "se",  "te",   "ne", "he", "me", "",   "re", ""  ],
+    ["o",  "ko",  "so",   "to",   "no", "ho", "mo", "yo", "ro", "wo"]
+];
+
+
+/* =========================================================
+   State
+   ========================================================= */
+
+let kanaData = null;
+let currentKana = "";
+let transitioning = false;
+
+
+/* =========================================================
+   DOM
+   ========================================================= */
+
+const modeSelect =
+    document.getElementById("modeSelect");
+
+const practice =
+    document.getElementById("practice");
+
+const kanaElement =
+    document.getElementById("kana");
+
+const feedbackElement =
+    document.getElementById("feedback");
+
+const gridElement =
+    document.getElementById("grid");
+
+const revealButton =
+    document.getElementById("reveal");
+
+const revealedAnswerElement =
+    document.getElementById("revealedAnswer");
+
+const hiraganaButton =
+    document.getElementById("hiraganaButton");
+
+const katakanaButton =
+    document.getElementById("katakanaButton");
+
+
+/* =========================================================
+   Start selected mode
+   ========================================================= */
+
+hiraganaButton.addEventListener("click", () => {
+    startPractice(hiragana);
+});
+
+katakanaButton.addEventListener("click", () => {
+    startPractice(katakana);
+});
+
+
+function startPractice(data) {
+
+    kanaData = data;
+
+    modeSelect.style.display = "none";
+    practice.style.display = "flex";
+
+    buildGrid();
+
+    newQuestion();
 }
 
-function checkAnswer() {
-    if (answered)
-        return;
 
-    const answer = answerElement.value.trim().toLowerCase();
+/* =========================================================
+   Build the romaji grid
+   ========================================================= */
 
-    if (answer === katakana[current]) {
-        answered = true;
-        feedbackElement.textContent = "✓ Correct!";
+function buildGrid() {
 
-        // Brief positive feedback before moving on.
-        setTimeout(newQuestion, 500);
-    } else {
-        feedbackElement.textContent = "✗ Wrong!";
-        revealButton.hidden = false;
+    gridElement.innerHTML = "";
+
+    for (const row of romajiGrid) {
+
+        for (const romaji of row) {
+
+            const button =
+                document.createElement("button");
+
+            if (romaji === "") {
+
+                button.className = "empty";
+                button.disabled = true;
+
+            } else {
+
+                button.textContent = romaji;
+
+                button.dataset.romaji = romaji;
+
+                button.addEventListener(
+                    "click",
+                    () => chooseAnswer(button)
+                );
+            }
+
+            gridElement.appendChild(button);
+        }
     }
 }
 
-answerElement.addEventListener("keydown", event => {
-    if (event.key === "Enter")
-        checkAnswer();
-});
+
+/* =========================================================
+   Answer selection
+   ========================================================= */
+
+function chooseAnswer(button) {
+
+    if (transitioning)
+        return;
+
+    const selected =
+        button.dataset.romaji;
+
+    const correct =
+        kanaData[currentKana];
+
+
+    if (selected === correct) {
+
+        transitioning = true;
+
+        button.classList.add("correct");
+
+        feedbackElement.textContent =
+            "✓ Correct!";
+
+        revealButton.disabled = true;
+
+        setTimeout(newQuestion, 600);
+
+    } else {
+
+        /*
+         * Wrong buttons stay red.
+         */
+
+        button.classList.add("wrong");
+
+        feedbackElement.textContent =
+            "✗ Wrong!";
+    }
+}
+
+
+/* =========================================================
+   Reveal answer
+   ========================================================= */
 
 revealButton.addEventListener("click", () => {
-    feedbackElement.textContent = `Answer: ${katakana[current]}`;
-    revealButton.hidden = true;
-    answered = true;
+
+    const correct =
+        kanaData[currentKana];
+
+    /*
+     * Show the answer at the bottom,
+     * but do NOT advance.
+     */
+
+    revealedAnswerElement.textContent =
+        correct;
+
+    revealButton.disabled = true;
 });
 
-newQuestion();
+
+/* =========================================================
+   New question
+   ========================================================= */
+
+function newQuestion() {
+
+    const characters =
+        Object.keys(kanaData);
+
+    currentKana =
+        characters[
+            Math.floor(Math.random() * characters.length)
+        ];
+
+    transitioning = false;
+
+    kanaElement.textContent =
+        currentKana;
+
+    feedbackElement.textContent = "";
+
+    revealedAnswerElement.textContent = "";
+
+    revealButton.disabled = false;
+
+
+    /*
+     * Reset all button states.
+     */
+
+    gridElement
+        .querySelectorAll("button")
+        .forEach(button => {
+
+            button.classList.remove("wrong");
+            button.classList.remove("correct");
+        });
+}
+
 </script>
 
 </body>
