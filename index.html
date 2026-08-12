@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>katakana learn</title>
+</head>
+<body>
+
+<div id="katakana"></div>
+
+<input id="answer" type="text" autocomplete="off" autofocus>
+
+<div id="feedback"></div>
+<button id="reveal" hidden>Reveal Answer</button>
+
+<script>
+const katakana = {
+    "ア": "a",   "イ": "i",   "ウ": "u",   "エ": "e",   "オ": "o",
+    "カ": "ka",  "キ": "ki",  "ク": "ku",  "ケ": "ke",  "コ": "ko",
+    "サ": "sa",  "シ": "shi", "ス": "su",  "セ": "se",  "ソ": "so",
+    "タ": "ta",  "チ": "chi", "ツ": "tsu", "テ": "te",  "ト": "to",
+    "ナ": "na",  "ニ": "ni",  "ヌ": "nu",  "ネ": "ne",  "ノ": "no",
+    "ハ": "ha",  "ヒ": "hi",  "フ": "fu",  "ヘ": "he",  "ホ": "ho",
+    "マ": "ma",  "ミ": "mi",  "ム": "mu",  "メ": "me",  "モ": "mo",
+    "ヤ": "ya",               "ユ": "yu",               "ヨ": "yo",
+    "ラ": "ra",  "リ": "ri",  "ル": "ru",  "レ": "re",  "ロ": "ro",
+    "ワ": "wa",                                      "ヲ": "wo",
+    "ン": "n"
+};
+
+const chars = Object.keys(katakana);
+
+const katakanaElement = document.getElementById("katakana");
+const answerElement = document.getElementById("answer");
+const feedbackElement = document.getElementById("feedback");
+const revealButton = document.getElementById("reveal");
+
+let current;
+let answered = false;
+
+function newQuestion() {
+    current = chars[Math.floor(Math.random() * chars.length)];
+
+    katakanaElement.textContent = current;
+    answerElement.value = "";
+    feedbackElement.textContent = "";
+    revealButton.hidden = true;
+    answered = false;
+
+    answerElement.focus();
+}
+
+function checkAnswer() {
+    if (answered)
+        return;
+
+    const answer = answerElement.value.trim().toLowerCase();
+
+    if (answer === katakana[current]) {
+        answered = true;
+        feedbackElement.textContent = "✓ Correct!";
+
+        // Brief positive feedback before moving on.
+        setTimeout(newQuestion, 500);
+    } else {
+        feedbackElement.textContent = "✗ Wrong!";
+        revealButton.hidden = false;
+    }
+}
+
+answerElement.addEventListener("keydown", event => {
+    if (event.key === "Enter")
+        checkAnswer();
+});
+
+revealButton.addEventListener("click", () => {
+    feedbackElement.textContent = `Answer: ${katakana[current]}`;
+    revealButton.hidden = true;
+    answered = true;
+});
+
+newQuestion();
+</script>
+
+</body>
+</html>
